@@ -1,0 +1,125 @@
+Step 1: Install Required Libraries
+First, ensure you have all the necessary Python libraries installed:
+
+pip install pandas numpy scikit-learn matplotlib seaborn
+Step 2: Import Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+Step 3: Load the Dataset
+For simplicity, we'll use the load_boston dataset from Scikit-learn, but note that this dataset has been deprecated. You can replace it with any other housing dataset.
+
+
+from sklearn.datasets import load_boston
+
+# Load the dataset
+boston = load_boston()
+df = pd.DataFrame(boston.data, columns=boston.feature_names)
+df['PRICE'] = boston.target
+
+# View the first few rows of the dataset
+print(df.head())
+Step 4: Data Exploration and Visualization
+
+# Summary statistics
+print(df.describe())
+
+# Correlation matrix
+plt.figure(figsize=(10, 8))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.show()
+Step 5: Feature Selection
+We’ll focus on a subset of features most correlated with the target variable (PRICE).
+
+
+# Selecting highly correlated features
+corr_matrix = df.corr()
+top_corr_features = corr_matrix.index[abs(corr_matrix["PRICE"]) > 0.5]
+plt.figure(figsize=(10, 6))
+sns.heatmap(df[top_corr_features].corr(), annot=True, cmap="coolwarm")
+plt.show()
+Step 6: Data Preprocessing
+
+# Defining features (X) and target (y)
+X = df.drop(['PRICE'], axis=1)
+y = df['PRICE']
+
+# Splitting the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Standardizing the features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+Step 7: Model Selection and Training
+Let's use Linear Regression and Random Forest Regressor for this example.
+
+
+# Linear Regression
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+y_pred_lr = lr.predict(X_test)
+
+# Random Forest Regressor
+rf = RandomForestRegressor(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)
+y_pred_rf = rf.predict(X_test)
+Step 8: Model Evaluation
+
+# Linear Regression evaluation
+print("Linear Regression Performance:")
+print(f"R^2: {r2_score(y_test, y_pred_lr)}")
+print(f"RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_lr))}")
+
+# Random Forest Regressor evaluation
+print("Random Forest Regressor Performance:")
+print(f"R^2: {r2_score(y_test, y_pred_rf)}")
+print(f"RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_rf))}")
+Step 9: Hyperparameter Tuning (Optional)
+Use Grid Search for hyperparameter tuning to improve the Random Forest model.
+
+
+# Hyperparameter tuning using GridSearchCV
+param_grid = {
+    'n_estimators': [100, 200, 300],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth': [10, 20, 30, None]
+}
+
+grid_rf = GridSearchCV(estimator=RandomForestRegressor(random_state=42), param_grid=param_grid, cv=5, n_jobs=-1)
+grid_rf.fit(X_train, y_train)
+
+# Best parameters
+print("Best Parameters:", grid_rf.best_params_)
+Step 10: Final Model Evaluation
+After tuning, evaluate the model again with the best parameters.
+
+
+# Using the best model
+best_rf = grid_rf.best_estimator_
+y_pred_best_rf = best_rf.predict(X_test)
+
+# Final evaluation
+print("Best Random Forest Regressor Performance:")
+print(f"R^2: {r2_score(y_test, y_pred_best_rf)}")
+print(f"RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_best_rf))}")
+Step 11: Visualization of Results
+
+# Plotting actual vs predicted values
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred_best_rf, color='blue')
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 'r--')
+plt.xlabel('Actual Prices')
+plt.ylabel('Predicted Prices')
+plt.title('Actual vs Predicted Prices')
+plt.show()
+
+Conclusion:
+This code provides a foundation for building a House Price Prediction System using Linear Regression and Random Forest. You can extend this by using more advanced models, better feature engineering, and larger datasets.
